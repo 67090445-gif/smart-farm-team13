@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>โรงเรือนอัจฉริยะ Smart Greenhouse Dashboard</title>
+<!-- นำเข้าฟอนต์ Prompt ให้หน้าเว็บดูสวยงาม ทันสมัย -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #f4f7f5;
+  --card: #ffffff;
+  --line: #e2e8e4;
+  --ink: #1c2820;
+  --dim: #627568;
+  --leaf: #2e7d32;
+  --leaf-light: #e8f5e9;
+  --soil: #b85d19;
+  --rain: #0288d1;
+  --dry: #e65100;
+  --bad: #d32f2f;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Prompt', system-ui, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header ดีไซน์คลีน */
+header {
+  background: #ffffff;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--leaf);
+  flex: 1 1 240px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Layout Grid สำหรับ Dashboard Cards */
+main {
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  max-width: 1140px;
+  margin: auto;
+}
+
+/* การ์ดสไตล์มินิมอล พร้อม Soft Shadow */
+.card {
+  min-width: 0;
+  background: var(--card);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px -4px rgba(0, 0, 0, 0.07);
+}
+
+.card h2 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wide { grid-column: 1 / -1; }
+
+/* Grid กล่องข้อมูลเซนเซอร์ */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.tile {
+  background: #f8faf8;
+  border: 1px solid #ebf0ec;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.tile span {
+  color: var(--dim);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.tile b {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1b2e22;
+  margin-top: 2px;
+}
+
+.stale .tile b { opacity: 0.35; }
+
+/* แถบหลอดระดับน้ำถังพักแบบ Gradient */
+.progress-bg {
+  background: #e4ebe6;
+  border-radius: 20px;
+  height: 8px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+#tank_bar {
+  background: linear-gradient(90deg, #36d1dc 0%, #5b86e5 100%);
+  height: 100%;
+  width: 0%;
+  border-radius: 20px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ป้ายเตือนต่าง ๆ */
+#banner, #tank_alert {
+  display: none;
+  background: #ffebee;
+  color: var(--bad);
+  border: 1px solid #ffcdd2;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.stale #banner { display: block; }
+
+/* กราฟ SVG */
+svg {
+  width: 100%;
+  max-width: 760px;
+  height: auto;
+  display: block;
+  margin: auto;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+/* ปุ่มควบคุมตกแต่งแบบ Micro-Interactions */
+button {
+  background: linear-gradient(135deg, #2e7d32 0%, #256629 100%);
+  color: #ffffff;
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 16px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46, 125, 50, 0.3);
+}
+
+button:active {
+  transform: translateY(0) scale(0.97);
+}
+
+button.alt {
+  background: #f0f4f1;
+  color: var(--ink);
+  box-shadow: none;
+}
+
+button.alt:hover {
+  background: #e2ece4;
+}
+
+button.stop {
+  background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.25);
+}
+
+button.preset {
+  background: #e3f2fd;
+  color: #0277bd;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  box-shadow: none;
+}
+
+button.preset:hover {
+  background: #bbdefb;
+}
+
+input {
+  min-width: 0;
+  max-width: 100%;
+  font: inherit;
+  background: #ffffff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input:focus {
+  border-color: var(--leaf);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.muted {
+  color: var(--dim);
+  font-size: 0.85rem;
+}
+
+/* จุดไฟสถานะกระพริบ Real-time */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #f0f4f1;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--bad);
+  margin-right: 6px;
+  transition: background-color 0.3s;
+}
+
+.status-badge.ok .status-dot {
+  background-color: var(--leaf);
+  box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(46, 125, 50, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
+}
+
+#status.ok { color: var(--leaf); }
+#status.bad { color: var(--bad); }
+
+#log {
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--dim);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  color: var(--dim);
+  font-weight: 500;
+}
+
+td.up { color: var(--leaf); font-weight: 600; }
+td.flat { color: var(--dry); }
+
+footer {
+  padding: 20px;
+  color: var(--dim);
+  font-size: 0.85rem;
+  max-width: 1140px;
+  margin: auto;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌱 ระบบรดน้ำแปลงผักคอสอัจฉริยะ</h1>
+  <label class="muted">ทีม <input id="team" size="10" autocomplete="off" placeholder="team01"></label>
+  <button id="go" class="alt">เชื่อมต่อ</button>
+  <div class="status-badge" id="status_badge">
+    <span class="status-dot"></span>
+    <span id="status" class="bad">ยังไม่ต่อ</span>
+  </div>
+</header>
+
+<main id="app">
+  <!-- การ์ดแสดงกราฟย้อนหลัง -->
+  <section class="card wide">
+    <div id="banner">⚠️ บอร์ดเงียบเกิน 15 วินาที: ข้อมูลบนหน้านี้อาจไม่เป็นปัจจุบัน ตรวจสอบไฟและ WiFi ที่บอร์ด</div>
+    <div id="tank_alert">🚨 เตือนภัย: ระดับน้ำในถังพัก (VR4) ต่ำกว่า 10%! ระบบจะไม่เปิดวาล์วรดน้ำเพื่อความปลอดภัย</div>
+
+    <h2>📈 เส้นเวลา: ความชื้นดิน และ ช่วงเวลาการรดน้ำ (60 จุดล่าสุด)</h2>
+    <svg id="chart" viewBox="0 0 600 230" role="img" aria-label="กราฟความชื้นดินและช่วงรดน้ำ"></svg>
+    <p class="muted">
+      🟩 พื้นเขียว = ความชื้นสูง (>70%) · 
+      🟧 พื้นส้ม = ต่ำกว่าเกณฑ์ดินแห้ง (<span id="dryv"></span>%) · 
+      🟦 แถบฟ้าล่าง = ช่วงเปิดวาล์ว
+    </p>
+  </section>
+
+  <!-- การ์ดแสดงสถานะปัจจุบัน -->
+  <section class="card">
+    <h2>📊 สภาพแวดล้อมปัจจุบัน</h2>
+    <div class="tiles">
+      <div class="tile">
+        <span>ความชื้นดิน (VR1)</span>
+        <b id="t_soil">--</b>
+      </div>
+      <div class="tile">
+        <span>ถังพักน้ำ (VR4)</span>
+        <b id="t_tank">--</b>
+        <div class="progress-bg">
+          <div id="tank_bar"></div>
+        </div>
+      </div>
+      <div class="tile">
+        <span>ดินแห้งสะสม</span>
+        <b id="t_dry">--</b>
+      </div>
+      <div class="tile">
+        <span>รดน้ำสะสมรวม</span>
+        <b id="t_water">--</b>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:12px;">
+      สถานะวาล์ว: <b id="t_pump" style="color:var(--ink)">--</b> · อัปเดตล่าสุด <span id="t_age">--</span>
+    </p>
+  </section>
+
+  <!-- การ์ดสั่งงานวาล์วน้ำ -->
+  <section class="card">
+    <h2>🎛️ สั่งงานวาล์วน้ำแปลง 0</h2>
+    <div class="row">
+      <label class="muted">เปิดนาน <input id="sec" type="number" min="1" max="30" value="10" style="width:4.5em"> วิ</label>
+      <button id="water">เปิดวาล์ว</button>
+      <button id="off" class="stop">ปิดวาล์ว</button>
+    </div>
+    
+    <div class="row">
+      <span class="muted">สั่งงานด่วน: </span>
+      <button class="preset" onclick="quickWater(5)">💧 5 วิ</button>
+      <button class="preset" onclick="quickWater(15)">🌧️ 15 วิ</button>
+      <button class="preset" onclick="quickWater(30)">🌊 30 วิ (เพดาน)</button>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <button id="beep" class="alt">🔔 เรียกคนงาน (Beep)</button>
+    </div>
+    
+    <div class="row">
+      <input id="say" maxlength="20" placeholder="ส่งข้อความภาษาอังกฤษ..." style="flex:1">
+      <button id="sayb" class="alt">ส่งขึ้นจอไฟ</button>
+    </div>
+    <div class="row">
+      <span class="muted">ข้อความด่วน: </span>
+      <button class="preset alt" onclick="quickSay('WATERING')">WATERING</button>
+      <button class="preset alt" onclick="quickSay('DRY SOIL')">DRY SOIL</button>
+      <button class="preset alt" onclick="quickSay('SOS')">SOS</button>
+    </div>
+
+    <div class="row" style="margin-top:14px;">
+      <button id="csv" class="alt">📥 ดาวน์โหลด CSV</button>
+      <span id="csvn" class="muted">0 แถว</span>
+    </div>
+  </section>
+
+  <!-- การ์ดประวัติรอบรดน้ำ -->
+  <section class="card">
+    <h2>⏱️ ประวัติรอบการรดน้ำ</h2>
+    <table id="runs">
+      <thead>
+        <tr><th>เวลาเริ่ม</th><th>ระยะเวลา</th><th>ดินก่อน</th><th>ดินหลัง</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <p class="muted" style="margin-top:8px;">หมายเหตุ: ค่าดินหลังรดไม่ขึ้น แสดงว่าหัวฉีดน้ำอาจตันหรือท่อรั่ว</p>
+  </section>
+
+  <!-- การ์ดบันทึกเหตุการณ์ -->
+  <section class="card">
+    <h2>📜 บันทึกเหตุการณ์ (Logs)</h2>
+    <ul id="log"></ul>
+  </section>
+</main>
+
+<footer>
+  <p>ระบบโรงเรือนอัจฉริยะ Smart Greenhouse Dashboard · สั่งการผ่าน MQTT Protocol</p>
+</footer>
+
+<!-- MQTT JavaScript Library -->
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+
+<script>
+"use strict";
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+// แก้ไขค่า SOIL_DRY เป็น 25% ตรงนี้เรียบร้อยแล้ว
+const SOIL_DRY = 25, TANK_MIN = 10, SILENT_MS = 15000, KEEP = 60;
+const NS = "http://www.w3.org/2000/svg";
+const $ = (id) => document.getElementById(id);
+const hist = [];
+const rows = [];
+let client = null, lastAt = 0;
+let run = null;
+let team = new URLSearchParams(location.search).get("team") || "";
+$("team").value = team;
+$("dryv").textContent = SOIL_DRY;
+
+function setStatus(text, ok) {
+  const s = $("status");
+  const badge = $("status_badge");
+  s.textContent = text;
+  s.className = ok ? "ok" : "bad";
+  if (ok) badge.classList.add("ok"); else badge.classList.remove("ok");
+}
+
+function num(v, lo, hi) { return (typeof v === "number" && isFinite(v) && v >= lo && v <= hi) ? Math.round(v) : null; }
+
+function addLog(text) {
+  const li = document.createElement("li");
+  li.textContent = new Date().toLocaleTimeString("th-TH") + "  " + text;
+  $("log").prepend(li);
+  while ($("log").children.length > 40) $("log").lastChild.remove();
+}
+
+function svgEl(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+// วาดกราฟความชื้นดินและช่วงเวลารดน้ำ
+function drawChart() {
+  const svg = $("chart"), W = 600, top = 10, H = 170, stripY = 196;
+  svg.replaceChildren();
+  const y = (v) => top + H - v * H / 100;
+  
+  // 1. ไฮไลต์โซนชื้นสูง >70% (สีเขียว)
+  svg.append(svgEl("rect", { x: 0, y: top, width: W, height: y(70) - top, fill: "#27ae60", opacity: .12 }));
+  svg.append(svgEl("line", { x1: 0, x2: W, y1: y(70), y2: y(70), stroke: "#27ae60", "stroke-dasharray": "5 4" }));
+
+  // 2. ไฮไลต์โซนดินแห้ง <25% (สีส้ม)
+  svg.append(svgEl("rect", { x: 0, y: y(SOIL_DRY), width: W, height: top + H - y(SOIL_DRY), fill: "#f0a030", opacity: .15 }));
+  svg.append(svgEl("line", { x1: 0, x2: W, y1: y(SOIL_DRY), y2: y(SOIL_DRY), stroke: "#f0a030", "stroke-dasharray": "5 4" }));
+  
+  // สเกลตัวเลขข้างกราฟ
+  for (const g of [0, SOIL_DRY, 70, 100]) {
+    const t = svgEl("text", { x: 6, y: y(g) + (g === 100 ? 14 : -4), fill: "#627568", "font-size": 13, "font-family": "Prompt" });
+    t.textContent = g + "%";
+    svg.append(t);
+  }
+
+  const step = W / (KEEP - 1);
+  const pts = [];
+  hist.forEach((h, i) => {
+    const x = i * step;
+    if (h.pump === 1) svg.append(svgEl("rect", { x: x - step / 2, y: stripY, width: step, height: 22, fill: "#0288d1" }));
+    if (h.soil !== null) pts.push(x.toFixed(1) + "," + y(h.soil).toFixed(1));
+  });
+
+  svg.append(svgEl("rect", { x: 0, y: stripY, width: W, height: 22, fill: "none", stroke: "#e2e8e4" }));
+  if (pts.length) svg.append(svgEl("polyline", { points: pts.join(" "), fill: "none", stroke: "#b85d19", "stroke-width": 3, "stroke-linejoin": "round" }));
+}
+
+function show(id, v, unit) { $(id).textContent = v === null ? "--" : v + unit; }
+
+function onTelemetry(d) {
+  const soil = num(d.soil, 0, 100), tank = num(d.tank, 0, 100), pump = num(d.pump, 0, 1);
+  const dry = num(d.dry_min, 0, 1e6), water = num(d.water_s, 0, 1e7), n = num(d.n, 0, 1e9);
+  lastAt = Date.now();
+  show("t_soil", soil, " %"); 
+  show("t_tank", tank, " %"); 
+  show("t_dry", dry, " นาที"); 
+  show("t_water", water, " วิ");
+  
+  // อัปเดตแถบระดับน้ำในถังพัก
+  if ($("tank_bar")) $("tank_bar").style.width = (tank !== null ? tank : 0) + "%";
+
+  // ป้ายเตือนน้ำต่ำ
+  if (tank !== null && tank < TANK_MIN) {
+    $("tank_alert").style.display = "block";
+  } else {
+    $("tank_alert").style.display = "none";
+  }
+
+  $("t_soil").style.color = soil !== null && soil < SOIL_DRY ? "var(--dry)" : "";
+  $("t_tank").style.color = tank !== null && tank < TANK_MIN ? "var(--bad)" : "";
+  $("t_pump").textContent = pump === null ? "--" : pump ? "เปิด กำลังรดน้ำ 🌊" : "ปิดอยู่ ⏹️";
+  
+  const prev = hist.length ? hist[hist.length - 1].pump : null;
+  if (prev !== null && pump !== null && prev !== pump) {
+    addLog(pump ? "วาล์วเปิด (ดิน " + soil + " %)" : "วาล์วปิด (ดิน " + soil + " %)");
+    trackRun(pump, soil);
+  }
+  hist.push({ soil, pump });
+  if (hist.length > KEEP) hist.shift();
+  rows.push([new Date().toISOString(), n, soil, tank, pump, dry, water]);
+  $("csvn").textContent = rows.length + " แถว";
+  drawChart();
+}
+
+function trackRun(pump, soil) {
+  if (pump === 1) { run = { t0: Date.now(), soil0: soil }; return; }
+  if (!run) return;
+  const tr = document.createElement("tr");
+  const sec = Math.round((Date.now() - run.t0) / 1000);
+  const cells = [new Date(run.t0).toLocaleTimeString("th-TH"), sec + " วินาที",
+                 run.soil0 === null ? "--" : run.soil0 + " %", soil === null ? "--" : soil + " %"];
+  for (const c of cells) { const td = document.createElement("td"); td.textContent = c; tr.append(td); }
+  if (soil !== null && run.soil0 !== null) tr.lastChild.className = soil > run.soil0 ? "up" : "flat";
+  $("runs").tBodies[0].prepend(tr);
+  while ($("runs").tBodies[0].rows.length > 12) $("runs").tBodies[0].lastChild.remove();
+  run = null;
+}
+
+function tickSilence() {
+  const stale = lastAt > 0 && Date.now() - lastAt > SILENT_MS;
+  $("app").classList.toggle("stale", stale);
+  $("t_age").textContent = lastAt ? Math.round((Date.now() - lastAt) / 1000) + " วินาทีที่แล้ว" : "--";
+}
+setInterval(tickSilence, 1000);
+
+function send(obj) {
+  if (!client || !client.connected) { setStatus("ยังไม่ต่อ broker", false); return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+  addLog("ส่งคำสั่ง " + JSON.stringify(obj));
+}
+
+function quickWater(seconds) {
+  $("sec").value = seconds;
+  send({ cmd: "pump", on: 1, sec: seconds });
+}
+
+function quickSay(text) {
+  $("say").value = text;
+  send({ cmd: "say", text: text });
+}
+
+function csvCell(v) {
+  if (v === undefined || v === null) return "";
+  let t = String(v);
+  if (/^[=+\-@]/.test(t)) t = "'" + t;
+  return /[",\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+
+function downloadCsv() {
+  const head = ["time", "n", "soil", "tank", "pump", "dry_min", "water_s"];
+  const text = [head.join(","), ...rows.map((r) => r.map(csvCell).join(","))].join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "greenhouse_" + team + ".csv";
+  document.body.append(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!/^team[0-9a-z_]{2,20}$/.test(team) || team === "team00") { setStatus("ใส่เลขทีม เช่น team01", false); return; }
+  if (client) client.end(true);
+  client = mqtt.connect(BROKER_URL, { clientId: "idea4-web-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  setStatus("กำลังต่อ...", false);
+  client.on("connect", () => { setStatus("ต่อแล้ว (" + team + ")", true); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setStatus("หลุด กำลังต่อใหม่...", false));
+  client.on("message", (topic, payload) => {
+    let d = null;
+    try { d = JSON.parse(payload.toString()); } catch (e) { d = null; }
+    if (topic.endsWith("/telemetry") && d && typeof d === "object" && !Array.isArray(d)) onTelemetry(d);
+    else if (!topic.endsWith("/cmd")) addLog("หัวข้ออื่น " + topic.slice(-30));
+  });
+}
+
+$("go").onclick = connect;
+$("water").onclick = () => {
+  const s = Number($("sec").value);
+  send({ cmd: "pump", on: 1, sec: Number.isInteger(s) && s > 0 ? Math.min(s, 30) : 10 });
+};
+$("off").onclick = () => send({ cmd: "pump", on: 0 });
+$("beep").onclick = () => send({ cmd: "beep" });
+$("sayb").onclick = () => send({ cmd: "say", text: $("say").value.replace(/[^ -~]/g, "").slice(0, 20).toUpperCase() });
+$("csv").onclick = downloadCsv;
+
+drawChart();
+if (team) connect(); else setStatus("ใส่เลขทีมแล้วกดเชื่อมต่อ", false);
+</script>
+</body>
+</html>
